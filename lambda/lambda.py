@@ -81,9 +81,9 @@ def main():
                     unknown+=1
             
     # Send metrics to cloudwatch for alerting        
-    sendMetic(high, 'SCAP High Finding', instanceId)
-    sendMetic(medium, 'SCAP Medium Finding', instanceId)
-    sendMetic(low, 'SCAP Low Finding', instanceId)
+    sendMetric(high, 'SCAP High Finding', instanceId)
+    sendMetric(medium, 'SCAP Medium Finding', instanceId)
+    sendMetric(low, 'SCAP Low Finding', instanceId)
     # Batch write all findings to DynamoDB
     table = dynamodb.Table('SCAP_Scan_Results')
     with table.batch_writer() as batch:
@@ -135,7 +135,7 @@ def saveToDynamoDB(dynamoDbItems, instanceId, item, bucket_name, file_key):
 
 
 # method for creating the metrics
-def sendMetic(value, title, instanceId):
+def sendMetric(value, title, instanceId):
     cloudWatch.put_metric_data(
         Namespace='Compliance',
         MetricData=[

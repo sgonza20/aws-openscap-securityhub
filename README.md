@@ -10,4 +10,4 @@ Instructions: Deploy the create-scap-automation.yml CloudFormation template to c
 
 ...
 
-![OpenSCAP](images/OpenSCAPDiagram.jpg)
+![OpenSCAP](images/OpenSCAPDiagramLight.jpg)

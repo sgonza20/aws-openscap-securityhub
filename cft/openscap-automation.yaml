@@ -301,21 +301,32 @@ Resources:
       Name: AWS-RunShellScript
       Parameters:
         commands:
-          - yum install openscap-scanner scap-security-guide -y
-          - if grep -q -i "Amazon Linux release 2" /etc/system-release ; then 
+          - if [ -f /etc/os-release ]; then
+          -   . /etc/os-release
+          - fi
+          - if [[ "$ID" == "amzn" && "$VERSION_ID" == "2" ]]; then
+          -   package_manager="yum"
           -   scriptFile="/usr/share/xml/scap/ssg/content/ssg-amzn2-ds.xml"
-          -   sudo sed -i 's|https://www.redhat.com/security/data/oval/com.redhat.rhsa-RHEL7.xml.bz2|https://www.redhat.com/security/data/oval/v2/RHEL7/rhel-7.oval.xml.bz2|g' /usr/share/xml/scap/ssg/content/ssg-amzn2-ds.xml
+          -   sudo sed -i 's|https://www.redhat.com/security/data/oval/com.redhat.rhsa-RHEL7.xml.bz2|https://www.redhat.com/security/data/oval/v2/RHEL7/rhel-7.oval.xml.bz2|g' $scriptFile
+          - elif [[ "$ID" == "amzn" && "$VERSION_ID" == "2023" ]]; then
+          -   package_manager="dnf"
+          -   scriptFile="/usr/share/xml/scap/ssg/content/ssg-al2023-ds.xml"
           - elif grep -q -i "release 8" /etc/redhat-release ; then
+          -   package_manager="dnf"
           -   scriptFile="/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml"
           - elif grep -q -i "release 7" /etc/redhat-release ; then
+          -   package_manager="yum"
           -   scriptFile="/usr/share/xml/scap/ssg/content/ssg-rhel7-ds.xml"
           - elif grep -q -i "release 6" /etc/redhat-release ; then
-          -   scriptFile="/usr/share/xml/scap/ssg/content/ssg-rhel6-ds.xml"              
+          -   package_manager="yum"
+          -   scriptFile="/usr/share/xml/scap/ssg/content/ssg-rhel6-ds.xml"
           - else
-          -   echo "Running neither AMZN2.x, RHEL6.x, RHEL7.x or RHEL 8.x !"
+          -   echo "Unsupported OS version detected!"
+          -   exit 1
           - fi
-          - if [ "$scriptFile" ] ; then
-          - sed -i 's/multi-check="true"/multi-check="false"/g' $scriptFile
+          - sudo $package_manager install openscap-scanner scap-security-guide -y
+          - if [ "$scriptFile" ]; then
+          -   sed -i 's/multi-check="true"/multi-check="false"/g' $scriptFile
           -   oscap xccdf eval --fetch-remote-resources --profile xccdf_org.ssgproject.content_profile_stig-rhel7-disa --results-arf arf.xml --report report.html $scriptFile
           - fi
           - instanceId=$(ec2-metadata -i | grep -o 'i-.*' | awk '{print $1}')

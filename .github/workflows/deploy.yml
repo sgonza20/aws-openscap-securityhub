@@ -1,0 +1,45 @@
+name: Deploy Lambda and CloudFormation
+
+on:
+  push:
+    branches:
+      - main  # Adjust if needed
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1  # Change if needed
+  LAMBDA_FUNCTION_NAME: ProcessSCAPScanResults  # Change once
+  CF_TEMPLATE_FILE: cft/opensearch/opensearch-automation.yml  # Change once
+  CF_STACK_NAME: YourStackName  # Change once
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/YOUR_GITHUB_ACTIONS_ROLE
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Zip and upload Lambda function
+        run: |
+          cd lambda_opensearch
+          zip -r lambda_function.zip .
+          aws lambda update-function-code \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+            --zip-file fileb://lambda_function.zip
+
+      - name: Deploy CloudFormation stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name ${{ env.CF_STACK_NAME }} \
+            --template-file ${{ env.CF_TEMPLATE_FILE }} \
+            --capabilities CAPABILITY_NAMED_IAM

@@ -1,0 +1,2 @@
+pass instance id to lambda function to pass bucket key dynamically
+update boto3 client for opensearch to send request
